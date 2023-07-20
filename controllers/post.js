@@ -215,7 +215,7 @@ export const profilePageTotalPosts = async (req, res) => {
 
 export const posts = async (req, res) => {
     try {
-        const limit = 12;
+        const limit = 5;
         const { page } = req.query || 1;
         const { updated } = req.query;
 
