@@ -1,6 +1,7 @@
 import User from "../models/User";
 import { hashPassword, comparePassword } from "../helpers/auth";
 import jwt from "jsonwebtoken";
+import Post from "../models/Post";
 
 export const signup = async (req, res) => {
     const { username, email, password, secret, phone, address } = req.body;
@@ -203,12 +204,16 @@ export const profileUpdate = async (req, res) => {
 export const findPeople = async (req, res) => {
     try {
         const user = await User.findById(req.auth._id);
-        let followings = user.followings;
-        followings.push(user._id);
+        if (user) {
+            let followings = user.followings;
+            followings.push(user._id);
 
-        //find people to follow only without the followings array
-        const people = await User.find({ _id: { $nin: followings } }).select("-password -secret").limit(10);
-        res.json(people);
+            //find people to follow only without the followings array
+            const people = await User.find({ _id: { $nin: followings } }).select("-password -secret").limit(10);
+            res.json(people);
+        } else{
+            return;
+        }
     } catch (err) {
         console.log(err);
     }
@@ -299,6 +304,36 @@ export const getUser = async (req, res) => {
     try {
         const user = await User.findById(req.params.id).select("-password -secret");
         res.json(user);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export const totalUsers = async (req, res) => {
+    try {
+        const total = await User.find().estimatedDocumentCount();
+        res.json(total);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export const findUserForAdmin = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select("-password -secret");
+        res.json(user);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export const deleteUser = async (req, res) => {
+    const id = req.params.id;
+    try {
+        const posts = await Post.find({ postedBy: id }).deleteMany();
+        const user = await User.findByIdAndDelete(id);
+
+        res.json({ ok: true });
     } catch (err) {
         console.log(err);
     }

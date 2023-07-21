@@ -15,7 +15,10 @@ import {
     removeFollower,
     userUnfollow,
     searchUser,
-    getUser
+    getUser,
+    totalUsers,
+    findUserForAdmin,
+    deleteUser
 } from '../controllers/auth';
 
 router.post('/signup', signup);
@@ -29,6 +32,10 @@ router.put("/user-unfollow", requireSignin, removeFollower, userUnfollow);
 router.get('/user-followings', requireSignin, userFollowing);
 router.get('/search-user/:query', searchUser);
 router.get('/user/:id', getUser);
-router.get('/current-admin', requireSignin, isAdmin, currentUser);
+router.get('/total-users', totalUsers);
 
+// admin
+router.get('/current-admin', requireSignin, isAdmin, currentUser);
+router.get('/admin/users/:id', requireSignin, isAdmin, findUserForAdmin);
+router.delete('/admin/delete-user/:id', requireSignin, isAdmin, deleteUser);
 module.exports = router;

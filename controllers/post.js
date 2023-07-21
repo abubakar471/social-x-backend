@@ -99,23 +99,27 @@ export const deletePost = async (req, res) => {
 export const newsFeed = async (req, res) => {
     try {
         const user = await User.findById(req.auth._id);
-        let followings = user.followings;
-        followings.push(req.auth._id);
+        if (user) {
+            let followings = user.followings;
+            followings.push(req.auth._id);
 
-        //pagination 
-        const { page } = req.query || 1;
-        console.log(req.query)
-        const limit = 12;
-        // this will look for the post from the followings array according to the date postedBy
-        const posts = await Post.find({ postedBy: { $in: followings } })
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(12)
-            .populate("postedBy", "_id username image")
-            .populate("comments.postedBy", "_id  username image");
+            //pagination 
+            const { page } = req.query || 1;
+            console.log(req.query)
+            const limit = 12;
+            // this will look for the post from the followings array according to the date postedBy
+            const posts = await Post.find({ postedBy: { $in: followings } })
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(12)
+                .populate("postedBy", "_id username image")
+                .populate("comments.postedBy", "_id  username image");
 
-        console.log(posts.length)
-        res.json(posts);
+            console.log(posts.length)
+            res.json(posts);
+        } else {
+            return res.sendStatus(401);
+        }
 
     } catch (err) {
         console.log(err);
@@ -203,11 +207,15 @@ export const totalPosts = async (req, res) => {
 export const profilePageTotalPosts = async (req, res) => {
     try {
         const user = await User.findById(req.auth._id);
-        let followings = user.followings;
-        followings.push(req.auth._id);
-        const total = await Post.countDocuments({ postedBy: { $in: followings } });
-        console.log('profile page total posts => ', total);
-        res.json(total);
+        if (user) {
+            let followings = user.followings;
+            followings.push(req.auth._id);
+            const total = await Post.countDocuments({ postedBy: { $in: followings } });
+            console.log('profile page total posts => ', total);
+            res.json(total);
+        } else{
+            return;
+        }
     } catch (err) {
         console.log(err);
     }
@@ -217,7 +225,6 @@ export const posts = async (req, res) => {
     try {
         const limit = 5;
         const { page } = req.query || 1;
-        const { updated } = req.query;
 
         const posts = await Post.find()
             .skip((page - 1) * limit)
@@ -244,67 +251,6 @@ export const getPost = async (req, res) => {
     }
 }
 
-// export const trendings = async (req, res) => {
-//     // const data = Post.find().populate("postedBy", "_id username image")
-//     //     .populate("comments.postedBy", "_id  username image");
-//     // console.log("data => ", data)
-//     Post.aggregate(
-//         [
-//             {
-//                 "$project": {
-//                     "content" : 1,
-//                     "postedBy" : 1,
-//                     "image" : 1,
-//                     "postedBy" : 1,
-//                     "comments" : 1,
-//                     "likes": 1,
-//                     "length": { "$size": "$likes" }
-//                 }
-//             },
-//             { "$sort": { "length": -1 } },
-//             { "$limit": 5 },
-//             {
-//                 $lookup : {
-//                     "from" : "posts",
-//                     "localField" : "_id",
-//                     "foreignField" : "_id",
-//                     "pipeline" : [
-//                         { "$project": { "postedBy" : 1, "comments" : 1}}, 
-//                         {
-//                             $lookup: {
-//                                 from: "users",
-//                                 localField: "postedBy comments.postedBy",
-//                                 foreignField: "_id username image",
-//                                 as: "post"
-//                             }
-//                         }
-//                     ],
-//                     "as" : "posts"
-//                 }
-//             }
-//         ]
-//     ).exec((err, results) => {
-//         // results in here
-//         // const data = [];
-//         // const fetchData = async(_id) => {
-//         //     const fetchedData = await Post.findById(_id).populate("postedBy", "_id username image");
-//         //     data.push(fetchedData)
-//         // }
-//         // // console.log(results)
-//         // results.map(async(r) => {
-//         // //   fetchData(r['posts'][0]._id);
-//         // console.log(r['posts'][0]._id)
-//         //     const fetchedData = await Post.findById(r['posts'][0]._id).populate("postedBy", "_id username image");
-//         //     data.push(fetchedData)
-//         // })
-//         console.log(results)
-// res.json(posts);
-
-//         // console.log(data)
-//     })
-
-
-// }
 
 
 export const trendings = async (req, res) => {
@@ -332,7 +278,7 @@ export const searchPost = async (req, res) => {
         })
             .skip((page - 1) * limit)
             .limit(limit)
-            .sort({createdAt : -1})
+            .sort({ createdAt: -1 })
             .populate("postedBy", "_id username image")
             .populate("comments.postedBy", "_id  username image");
         console.log("searched posts => ", posts);
@@ -344,10 +290,28 @@ export const searchPost = async (req, res) => {
         })
         console.log('totalposts => ', totalPosts)
         res.json({
-            data : posts, 
-            totalPosts : totalPosts
+            data: posts,
+            totalPosts: totalPosts
         });
     } catch (err) {
         console.log(err);
     }
+}
+
+export const findPostForAdmin = async (req, res) => {
+    const id = req.params.id;
+
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+        try {
+
+            const post = await Post.findById(id).populate("postedBy", "_id username image")
+                .populate("comments.postedBy", "_id  username image");
+            res.json(post);
+
+
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
 }

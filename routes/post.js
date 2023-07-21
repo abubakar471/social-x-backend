@@ -18,7 +18,8 @@ import {
     posts,
     getPost,
     trendings,
-    searchPost
+    searchPost,
+    findPostForAdmin
 } from '../controllers/post';
 import { requireSignin, canEditDeletePost, isAdmin } from '../middlewares/index';
 
@@ -38,7 +39,10 @@ router.get('/total-posts', totalPosts);
 router.get('/posts', posts);
 router.get('/post/:_id', getPost);
 router.get('/search/:query', searchPost);
-router.get('/trendings', trendings)
+router.get('/trendings', trendings);
+
+// admin
 router.delete("/admin/delete-post/:_id", requireSignin, isAdmin, deletePost);
+router.get('/admin/posts/:id', requireSignin, isAdmin, findPostForAdmin);
 
 module.exports = router;
